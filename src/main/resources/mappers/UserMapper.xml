@@ -170,14 +170,14 @@
 		and password=#{password}
 	</select>
 
-	<select id="selectQuestionByUsername" resultMap="string" parameterType="string">
+	<select id="selectQuestionByUsername" resultType="string" parameterType="string">
     SELECT
     question
     from mmall_user
     WHERE username = #{username}
   </select>
 
-	<select id="checkAnswer" resultMap="int" parameterType="map">
+	<select id="checkAnswer" resultType="int" parameterType="map">
     SELECT
     count(1)
     from mmall_user
@@ -194,12 +194,18 @@
 		where username = #{username}
 	</update>
 
-	<select id="checkPassword" resultMap="int" parameterType="map">
+	<select id="checkPassword" resultType="int" parameterType="map">
 		select
 		count(1)
 		from mmall_user
 		where id = #{userId}
 		and password = #{password}
+	</select>
+
+	<select id="checkEmailByUserId" resultMap="int" parameterType="map">
+	select count(1) from mmall_user
+    where email = #{email}
+    and id != #{userId}
 	</select>
 
 

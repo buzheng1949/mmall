@@ -208,6 +208,7 @@ public class UserServiceImpl implements IUserService {
 
     /**
      * 更新密码登陆状态
+     *
      * @param passwordOld
      * @param passwordNew
      * @param user
@@ -224,10 +225,45 @@ public class UserServiceImpl implements IUserService {
 
         int updateCount = userMapper.updateByPrimaryKeySelective(user);
 
-        if(updateCount>0){
+        if (updateCount > 0) {
             return ServerResponse.createBySuccessMessage("密码更新成功");
         }
 
         return ServerResponse.createByErrorMessage("密码更新失败");
+    }
+
+    /**
+     * 更新个人信息
+     * @param user
+     * @return
+     */
+    @Override
+    public ServerResponse<User> updateInformation(User user) {
+        //username不能被更新
+        //email不能存在相同的
+        int resultCount = userMapper.checkEmailByUserId(user.getEmail(), user.getId());
+        if (resultCount > 0) {
+            return ServerResponse.createByErrorMessage("Email 已经存在");
+        }
+
+        User updateUser = new User();
+
+        updateUser.setId(user.getId());
+
+        updateUser.setEmail(user.getEmail());
+
+        updateUser.setPhone(user.getPhone());
+
+        updateUser.setQuestion(user.getQuestion());
+
+        updateUser.setAnswer(user.getAnswer());
+
+        int updateCount = userMapper.updateByPrimaryKeySelective(updateUser);
+
+        if (updateCount > 0) {
+            return ServerResponse.createBySuccess("更新个人信息成功", updateUser);
+        }
+
+        return ServerResponse.createByErrorMessage("更新个人信息失败");
     }
 }
