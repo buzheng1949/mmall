@@ -2,6 +2,7 @@ package com.mmall.service.impl;
 
 import com.mmall.common.Const;
 import com.mmall.common.ServerResponse;
+import com.mmall.common.TokenCache;
 import com.mmall.dao.UserMapper;
 import com.mmall.pojo.User;
 import com.mmall.service.IUserService;
@@ -9,6 +10,8 @@ import com.mmall.util.MD5Util;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 /**
  * Created by buzheng on 17/6/17.
@@ -52,15 +55,15 @@ public class UserServiceImpl implements IUserService {
     @Override
     public ServerResponse<String> register(User user) {
 
-        ServerResponse validResponse = checkValid(user.getUsername(),Const.CURRENT_USER);
+        ServerResponse validResponse = checkValid(user.getUsername(), Const.CURRENT_USER);
 
-        if(!validResponse.isSuccess()){
+        if (!validResponse.isSuccess()) {
             return validResponse;
         }
 
-        validResponse = checkValid(user.getEmail(),Const.EMAIL);
+        validResponse = checkValid(user.getEmail(), Const.EMAIL);
 
-        if(!validResponse.isSuccess()){
+        if (!validResponse.isSuccess()) {
             return validResponse;
         }
 
@@ -80,6 +83,7 @@ public class UserServiceImpl implements IUserService {
 
     /**
      * 校验注册名称是否存在
+     *
      * @param str
      * @param type
      * @return
@@ -106,5 +110,56 @@ public class UserServiceImpl implements IUserService {
         }
 
         return ServerResponse.createBySuccessMessage("校验成功");
+    }
+
+    /**
+     * 查询用户密码忘记问题
+     *
+     * @param username
+     * @return
+     */
+    @Override
+    public ServerResponse selectQuestion(String username) {
+        ServerResponse validResponse = checkValid(username, Const.USERNAME);
+
+        if (validResponse.isSuccess()) {
+            //用户不存在
+            return ServerResponse.createByErrorMessage("用户不存在");
+        }
+
+        String question = userMapper.selectQuestionByUsername(username);
+
+        if (StringUtils.isNotBlank(question)) {
+            return ServerResponse.createBySuccessMessage(question);
+        }
+
+        return ServerResponse.createByErrorMessage("问题不存在");
+
+    }
+
+    /**
+     * 校验用户问题是否正确
+     * @param username
+     * @param question
+     * @param answer
+     * @return
+     */
+    @Override
+    public ServerResponse<String> checkAnswer(String username, String question, String answer) {
+        int resultCount = userMapper.checkAnswer(username, question, answer);
+
+        if (resultCount > 0) {
+            //问题正确 随机生成一个token
+            String forgetToken = UUID.randomUUID().toString();
+
+            TokenCache.setKey("token_" + username, forgetToken);
+
+            return ServerResponse.createBySuccessMessage(forgetToken);
+
+        }
+
+        return ServerResponse.createByErrorMessage("问题答案错误");
+
+
     }
 }
