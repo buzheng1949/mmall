@@ -128,7 +128,7 @@ public class UserController {
     }
 
     /**
-     * 重置密码
+     * 重置密码 忘记密码
      *
      * @param username
      * @param passwordNew
@@ -139,6 +139,27 @@ public class UserController {
     @ResponseBody
     public ServerResponse<String> forgetResetPassword(String username, String passwordNew, String forgetToken) {
         return iUserService.forgetResetPassword(username, passwordNew, forgetToken);
+    }
+
+
+    /**
+     * 登陆状态下重置密码
+     *
+     * @param session
+     * @param passwordOld
+     * @param passwordNew
+     * @return
+     */
+    @RequestMapping(value = "reset_password.do", method = RequestMethod.GET)
+    @ResponseBody
+    public ServerResponse<String> resetPassword(HttpSession session, String passwordOld, String passwordNew) {
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if (user == null) {
+            return ServerResponse.createByErrorMessage("用户未登陆");
+        }
+
+        return iUserService.resetPassword(passwordOld, passwordNew, user);
+
     }
 
 
