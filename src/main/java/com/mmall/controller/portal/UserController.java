@@ -1,6 +1,7 @@
 package com.mmall.controller.portal;
 
 import com.mmall.common.Const;
+import com.mmall.common.ResponseCode;
 import com.mmall.common.ServerResponse;
 import com.mmall.pojo.User;
 import com.mmall.service.IUserService;
@@ -164,6 +165,7 @@ public class UserController {
 
     /**
      * 更新个人信息
+     *
      * @param session
      * @param user
      * @return
@@ -186,6 +188,23 @@ public class UserController {
 
         return response;
 
+    }
+
+    /**
+     * 获取登陆用户信息
+     *
+     * @param session
+     * @return
+     */
+    @RequestMapping(value = "get_information.do", method = RequestMethod.GET)
+    @ResponseBody
+    public ServerResponse<User> get_information(HttpSession session) {
+        User currentUser = (User) session.getAttribute(Const.CURRENT_USER);
+        if (null == currentUser) {
+            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(), "未登陆，请先登陆");
+        }
+
+        return iUserService.getInformation(currentUser.getId());
     }
 
 
