@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 /**
  * Created by buzheng on 17/7/16.
@@ -31,6 +31,35 @@ public class ProductServiceImpl implements IProductService {
 
     @Autowired
     private CategoryMapper categoryMapper;
+
+    /**
+     * 通过ID或者商品名称搜索商品信息
+     * @param pageNum
+     * @param pageSize
+     * @param productId
+     * @param productName
+     * @return
+     */
+    public ServerResponse<PageInfo> searchProduct(Integer pageNum, Integer pageSize, Integer productId, String productName) {
+        if (StringUtils.isBlank(productName) && productId == null) {
+            return ServerResponse.createByErrorMessage("搜索商品参数不能为空");
+        }
+        PageHelper.startPage(pageNum, pageSize);
+        if (StringUtils.isNotBlank(productName)) {
+            StringBuilder sb = new StringBuilder();
+            productName = sb.append("%").append(productName).append("%").toString();
+        }
+        List<Product> products = productMapper.selectProductByNameOrId(productId, productName);
+        List<ProductListVO> productListVos = Lists.newArrayList();
+        for (Product product : products) {
+            ProductListVO productListVo = coverProductListVO(product);
+            productListVos.add(productListVo);
+        }
+        PageInfo pageResult = new PageInfo(products);
+        pageResult.setList(productListVos);
+        return ServerResponse.createBySuccessMessage(pageResult);
+
+    }
 
     /**
      * 通过分页查询商品列表
