@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.jws.soap.SOAPBinding;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -94,6 +95,14 @@ public class ProductManageController {
     }
 
 
+    /**
+     * 获取所有商品列表
+     *
+     * @param session
+     * @param pageNum
+     * @param pageSize
+     * @return
+     */
     @ResponseBody
     @RequestMapping(value = "list.do")
     public ServerResponse getProductList(HttpSession session, @RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
@@ -106,6 +115,33 @@ public class ProductManageController {
             return ServerResponse.createByErrorMessage("请使用管理员登陆");
         }
         return iProductService.getList(pageNum, pageSize);
+    }
+
+    /**
+     * 提供根据商品ID或者商品名称搜索信息的接口
+     *
+     * @param session
+     * @param productId
+     * @param productName
+     * @param pageNum
+     * @param pageSize
+     * @return
+     */
+    @ResponseBody
+    @RequestMapping(value = "search.do")
+    public ServerResponse searchProduct(HttpSession session,
+                                        Integer productId,
+                                        String productName,
+                                        @RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+                                        @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if (user == null) {
+            return ServerResponse.createByErrorMessage("用户未登陆");
+        }
+        if (!iUserService.checkAdminRole(user).isSuccess()) {
+            return ServerResponse.createByErrorMessage("请使用管理员登陆");
+        }
+        return iProductService.searchProduct(pageNum, pageSize, productId, productName);
     }
 
 
