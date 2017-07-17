@@ -4,17 +4,24 @@ import com.mmall.common.Const;
 import com.mmall.common.ServerResponse;
 import com.mmall.pojo.Product;
 import com.mmall.pojo.User;
+import com.mmall.service.IFileService;
 import com.mmall.service.IProductService;
 import com.mmall.service.IUserService;
+import com.mmall.util.PropertiesUtil;
 import com.mmall.vo.ProductDetailVO;
+import net.sf.jsqlparser.schema.Server;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.jws.soap.SOAPBinding;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by buzheng on 17/7/16.
@@ -28,6 +35,9 @@ public class ProductManageController {
 
     @Autowired
     private IProductService iProductService;
+
+    @Autowired
+    private IFileService iFileService;
 
     /**
      * 保存商品
@@ -142,6 +152,28 @@ public class ProductManageController {
             return ServerResponse.createByErrorMessage("请使用管理员登陆");
         }
         return iProductService.searchProduct(pageNum, pageSize, productId, productName);
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "upload.do")
+    public ServerResponse upload(HttpSession session,
+                                 @RequestParam(value = "upload_file",required = false) MultipartFile file,
+                                 HttpServletRequest request) {
+        User user = (User)session.getAttribute(Const.CURRENT_USER);
+        if(user == null){
+            return ServerResponse.createByErrorMessage("用户未登陆");
+        }
+        if (!iUserService.checkAdminRole(user).isSuccess()) {
+            return ServerResponse.createByErrorMessage("请使用管理员登陆");
+        }
+        String path = request.getSession().getServletContext().getRealPath("path");
+        String targetFileName = iFileService.upload(file, path);
+        String url = PropertiesUtil.getProperty("ftp.server.http.prefix") + targetFileName;
+        Map fileMap = new HashMap();
+        fileMap.put("uri", targetFileName);
+        fileMap.put("url", url);
+        return ServerResponse.createBySuccessMessage(fileMap);
+
     }
 
 

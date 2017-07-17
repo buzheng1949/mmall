@@ -16,6 +16,7 @@ import com.mmall.vo.ProductListVO;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class ProductServiceImpl implements IProductService {
 
     @Autowired
     private CategoryMapper categoryMapper;
+
 
     /**
      * 通过ID或者商品名称搜索商品信息
@@ -96,8 +98,7 @@ public class ProductServiceImpl implements IProductService {
         productListVo.setCategoryId(product.getCategoryId());
         productListVo.setPrice(product.getPrice());
         productListVo.setSubtitle(product.getSubtitle());
-        //// TODO: 17/7/16 这里的东西等补充
-        productListVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix", "xxx"));
+        productListVo.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix", "http://img.happymmall.com/"));
         return productListVo;
 
     }
@@ -137,8 +138,7 @@ public class ProductServiceImpl implements IProductService {
         productDetailVO.setPrice(product.getPrice());
         productDetailVO.setSubtitle(product.getSubtitle());
         productDetailVO.setStock(product.getStock());
-        //// TODO: 17/7/16 这里的东西等补充
-        productDetailVO.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix", "xxx"));
+        productDetailVO.setImageHost(PropertiesUtil.getProperty("ftp.server.http.prefix", "http://img.happymmall.com/"));
         Category category = categoryMapper.selectByPrimaryKey(product.getCategoryId());
         if (category == null) {
             productDetailVO.setParentCategoryId(0);
