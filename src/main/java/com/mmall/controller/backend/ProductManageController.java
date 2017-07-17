@@ -10,6 +10,7 @@ import com.mmall.service.IUserService;
 import com.mmall.util.PropertiesUtil;
 import com.mmall.vo.ProductDetailVO;
 import net.sf.jsqlparser.schema.Server;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.jws.soap.SOAPBinding;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
@@ -154,13 +156,21 @@ public class ProductManageController {
         return iProductService.searchProduct(pageNum, pageSize, productId, productName);
     }
 
+    /**
+     * 文件上传
+     *
+     * @param session
+     * @param file
+     * @param request
+     * @return
+     */
     @ResponseBody
     @RequestMapping(value = "upload.do")
     public ServerResponse upload(HttpSession session,
-                                 @RequestParam(value = "upload_file",required = false) MultipartFile file,
+                                 @RequestParam(value = "upload_file", required = false) MultipartFile file,
                                  HttpServletRequest request) {
-        User user = (User)session.getAttribute(Const.CURRENT_USER);
-        if(user == null){
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if (user == null) {
             return ServerResponse.createByErrorMessage("用户未登陆");
         }
         if (!iUserService.checkAdminRole(user).isSuccess()) {
@@ -173,8 +183,46 @@ public class ProductManageController {
         fileMap.put("uri", targetFileName);
         fileMap.put("url", url);
         return ServerResponse.createBySuccessMessage(fileMap);
-
     }
 
-
+    /**
+     * 上传富文本图片
+     * @param session
+     * @param request
+     * @param response
+     * @param file
+     * @return
+     */
+    @ResponseBody
+    @RequestMapping(value = "richtext_img_upload.do")
+    public Map richtextImgUpload(HttpSession session,
+                                 HttpServletRequest request,
+                                 HttpServletResponse response,
+                                 @RequestParam(value = "upload_file", required = false) MultipartFile file) {
+        Map resultMap = new HashMap();
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if(user == null){
+            resultMap.put("success",false);
+            resultMap.put("msg","用户未登陆");
+            return resultMap;
+        }
+        if(!iUserService.checkAdminRole(user).isSuccess()){
+            resultMap.put("success",false);
+            resultMap.put("msg","请使用管理员权限登陆");
+            return resultMap;
+        }
+        String path = request.getSession().getServletContext().getRealPath("path");
+        String targetFileName = iFileService.upload(file, path);
+        if(StringUtils.isBlank(targetFileName)){
+            resultMap.put("success",false);
+            resultMap.put("msg","上传失败");
+            return resultMap;
+        }
+        String url = PropertiesUtil.getProperty("ftp.server.http.prefix")+targetFileName;
+        resultMap.put("success",true);
+        resultMap.put("msg","上传成功");
+        resultMap.put("file_path",url);
+        response.addHeader("Access-Control-Allow-Headers","X-File-Name");
+        return resultMap;
+    }
 }
