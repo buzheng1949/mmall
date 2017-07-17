@@ -196,4 +196,19 @@
             </if>
         </where>
     </select>
+    <select id="selectByNameAndCategoryIds" resultMap="BaseResultMap" parameterType="map">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM mmall_product
+        where status=1
+        <if test="name != null">
+            and name LIKE #{name}
+        </if>
+        <if test="categoryIdList != null">
+            and category_id in
+            <foreach item = "item" index="index" open="(" separator="," close=")" collection="categoryIdList">
+               #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>
