@@ -32,4 +32,11 @@ public interface ICartService {
      * @return
      */
     ServerResponse<CartVo> deleteProduct(Integer userId, String productIds);
+
+    /**
+     * 返回用户的购物列表
+     * @param userId
+     * @return
+     */
+    ServerResponse<CartVo> list(Integer userId);
 }

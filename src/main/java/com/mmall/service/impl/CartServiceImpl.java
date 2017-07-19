@@ -33,6 +33,11 @@ public class CartServiceImpl implements ICartService {
     @Autowired
     private ProductMapper productMapper;
 
+    public ServerResponse<CartVo> list(Integer userId) {
+        CartVo cartVo = assembleCartVoLimit(userId);
+        return ServerResponse.createBySuccessMessage(cartVo);
+    }
+
     public ServerResponse<CartVo> deleteProduct(Integer userId, String productIds) {
         List<String> productList = Splitter.on(",").splitToList(productIds);
         if (CollectionUtils.isEmpty(productList)) {
@@ -58,7 +63,7 @@ public class CartServiceImpl implements ICartService {
 
     }
 
-    public ServerResponse add(Integer userId, Integer productId, Integer count) {
+    public ServerResponse<CartVo> add(Integer userId, Integer productId, Integer count) {
         if (productId == null || count == null) {
             return ServerResponse.createByErrorMessage("参数错误");
         }
@@ -91,43 +96,44 @@ public class CartServiceImpl implements ICartService {
         List<Cart> cartList = cartMapper.selectCartByUserId(userId);
         List<CartProductVo> cartProductVoList = Lists.newArrayList();
         BigDecimal cartTotalPrice = new BigDecimal("0");
-        if (CollectionUtils.isEmpty(cartList)) {
+        if (!CollectionUtils.isEmpty(cartList)) {
             for (Cart cart : cartList) {
                 CartProductVo cartProductVo = new CartProductVo();
                 cartProductVo.setId(cart.getId());
                 cartProductVo.setProductId(cart.getProductId());
                 cartProductVo.setUserId(cart.getUserId());
                 Product product = productMapper.selectByPrimaryKey(cart.getProductId());
-                if (product != null) {
-                    cartProductVo.setProductMainImage(product.getMainImage());
-                    cartProductVo.setProductName(product.getName());
-                    cartProductVo.setProductSubtitle(product.getSubtitle());
-                    cartProductVo.setProductStatus(product.getStatus());
-                    cartProductVo.setProductPrice(product.getPrice());
-                    cartProductVo.setProductStock(product.getStock());
-                    int buyLimitCount = 0;
-                    if (product.getStock() > cart.getQuantity()) {
-                        buyLimitCount = product.getStock();
-                        cartProductVo.setLimitQuantity(Const.Cart.LIMIT_NUM_SUCCESS);
-                    } else {
-                        buyLimitCount = product.getStock();
-                        cartProductVo.setLimitQuantity(Const.Cart.LIMIT_NUM_FAIL);
-                        //购物车更新有效库存
-                        Cart cartForQuantity = new Cart();
-                        cartForQuantity.setId(cart.getId());
-                        cartForQuantity.setQuantity(buyLimitCount);
-                        cartMapper.updateByPrimaryKeySelective(cartForQuantity);
-                    }
-                    cartProductVo.setQuantity(buyLimitCount);
-                    //计算总价
-                    cartProductVo.setProductTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(), cartProductVo.getQuantity().doubleValue()));
-                    cartProductVo.setProductChecked(cart.getChecked());
+                if (product == null) {
+                    continue;
                 }
-
+                cartProductVo.setProductMainImage(product.getMainImage());
+                cartProductVo.setProductName(product.getName());
+                cartProductVo.setProductSubtitle(product.getSubtitle());
+                cartProductVo.setProductStatus(product.getStatus());
+                cartProductVo.setProductPrice(product.getPrice());
+                cartProductVo.setProductStock(product.getStock());
+                int buyLimitCount = 0;
+                if (product.getStock() > cart.getQuantity()) {
+                    buyLimitCount = product.getStock();
+                    cartProductVo.setLimitQuantity(Const.Cart.LIMIT_NUM_SUCCESS);
+                } else {
+                    buyLimitCount = product.getStock();
+                    cartProductVo.setLimitQuantity(Const.Cart.LIMIT_NUM_FAIL);
+                    //购物车更新有效库存
+                    Cart cartForQuantity = new Cart();
+                    cartForQuantity.setId(cart.getId());
+                    cartForQuantity.setQuantity(buyLimitCount);
+                    cartMapper.updateByPrimaryKeySelective(cartForQuantity);
+                }
+                cartProductVo.setQuantity(buyLimitCount);
+                //计算总价
+                cartProductVo.setProductTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(), cartProductVo.getQuantity().doubleValue()));
+                cartProductVo.setProductChecked(cart.getChecked());
                 if (cart.getChecked() == Const.Cart.CHECKED) {
                     //如果已经勾选
                     cartTotalPrice = BigDecimalUtil.add(cartTotalPrice.doubleValue(), cartProductVo.getProductTotalPrice().doubleValue());
                 }
+
                 cartProductVoList.add(cartProductVo);
 
             }

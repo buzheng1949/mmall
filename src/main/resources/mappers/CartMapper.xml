@@ -116,12 +116,12 @@
       update_time = #{updateTime,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=INTEGER}
   </update>
-  <select id="selectCartByUserIdProductId" resultMap="com.mmall.dao.CategoryMapper.BaseResultMap" parameterType="map">
+  <select id="selectCartByUserIdProductId" resultMap="BaseResultMap" parameterType="map">
     SELECT
     <include refid="Base_Column_List"/>
     FROM  mmall_cart
     where user_id = #{userId}
-    and productId = #{productId}
+    and product_id = #{productId}
   </select>
 
   <select id="selectCartByUserId" resultMap="BaseResultMap" parameterType="int">
