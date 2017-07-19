@@ -1,5 +1,6 @@
 package com.mmall.service.impl;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.mmall.common.Const;
 import com.mmall.common.ServerResponse;
@@ -32,8 +33,33 @@ public class CartServiceImpl implements ICartService {
     @Autowired
     private ProductMapper productMapper;
 
+    public ServerResponse<CartVo> deleteProduct(Integer userId, String productIds) {
+        List<String> productList = Splitter.on(",").splitToList(productIds);
+        if (CollectionUtils.isEmpty(productList)) {
+            return ServerResponse.createByErrorMessage("参数错误");
+        }
+        cartMapper.deleteByUserIdProductIds(userId, productList);
+        CartVo cartVo = assembleCartVoLimit(userId);
+        return ServerResponse.createBySuccessMessage(cartVo);
+    }
+
+    public ServerResponse<CartVo> update(Integer userId, Integer productId, Integer count) {
+        if (productId == null || count == null) {
+            return ServerResponse.createByErrorMessage("参数错误");
+        }
+        Cart cart = cartMapper.selectCartByUserIdProductId(userId, productId);
+        if (cart != null) {
+            cart.setQuantity(count);
+        }
+        //更新购物车表中的数据
+        cartMapper.updateByPrimaryKeySelective(cart);
+        CartVo cartVo = assembleCartVoLimit(userId);
+        return ServerResponse.createBySuccessMessage(cartVo);
+
+    }
+
     public ServerResponse add(Integer userId, Integer productId, Integer count) {
-        if(productId == null || count == null){
+        if (productId == null || count == null) {
             return ServerResponse.createByErrorMessage("参数错误");
         }
         Cart cart = cartMapper.selectCartByUserIdProductId(userId, productId);
@@ -56,22 +82,23 @@ public class CartServiceImpl implements ICartService {
 
     /**
      * 聚合购物车返回的vo
+     *
      * @param userId
      * @return
      */
-    private CartVo assembleCartVoLimit(Integer userId){
+    private CartVo assembleCartVoLimit(Integer userId) {
         CartVo cartVo = new CartVo();
         List<Cart> cartList = cartMapper.selectCartByUserId(userId);
         List<CartProductVo> cartProductVoList = Lists.newArrayList();
         BigDecimal cartTotalPrice = new BigDecimal("0");
-        if(CollectionUtils.isEmpty(cartList)){
-            for (Cart cart:cartList){
+        if (CollectionUtils.isEmpty(cartList)) {
+            for (Cart cart : cartList) {
                 CartProductVo cartProductVo = new CartProductVo();
                 cartProductVo.setId(cart.getId());
                 cartProductVo.setProductId(cart.getProductId());
                 cartProductVo.setUserId(cart.getUserId());
                 Product product = productMapper.selectByPrimaryKey(cart.getProductId());
-                if(product != null){
+                if (product != null) {
                     cartProductVo.setProductMainImage(product.getMainImage());
                     cartProductVo.setProductName(product.getName());
                     cartProductVo.setProductSubtitle(product.getSubtitle());
@@ -79,10 +106,10 @@ public class CartServiceImpl implements ICartService {
                     cartProductVo.setProductPrice(product.getPrice());
                     cartProductVo.setProductStock(product.getStock());
                     int buyLimitCount = 0;
-                    if(product.getStock() > cart.getQuantity()){
+                    if (product.getStock() > cart.getQuantity()) {
                         buyLimitCount = product.getStock();
                         cartProductVo.setLimitQuantity(Const.Cart.LIMIT_NUM_SUCCESS);
-                    }else{
+                    } else {
                         buyLimitCount = product.getStock();
                         cartProductVo.setLimitQuantity(Const.Cart.LIMIT_NUM_FAIL);
                         //购物车更新有效库存
@@ -93,13 +120,13 @@ public class CartServiceImpl implements ICartService {
                     }
                     cartProductVo.setQuantity(buyLimitCount);
                     //计算总价
-                    cartProductVo.setProductTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(),cartProductVo.getQuantity().doubleValue()));
+                    cartProductVo.setProductTotalPrice(BigDecimalUtil.mul(product.getPrice().doubleValue(), cartProductVo.getQuantity().doubleValue()));
                     cartProductVo.setProductChecked(cart.getChecked());
                 }
 
-                if(cart.getChecked() == Const.Cart.CHECKED){
+                if (cart.getChecked() == Const.Cart.CHECKED) {
                     //如果已经勾选
-                    cartTotalPrice = BigDecimalUtil.add(cartTotalPrice.doubleValue(),cartProductVo.getProductTotalPrice().doubleValue());
+                    cartTotalPrice = BigDecimalUtil.add(cartTotalPrice.doubleValue(), cartProductVo.getProductTotalPrice().doubleValue());
                 }
                 cartProductVoList.add(cartProductVo);
 
@@ -114,11 +141,12 @@ public class CartServiceImpl implements ICartService {
 
     /**
      * 购物车中的表是不是全选状态
+     *
      * @param userId
      * @return
      */
-    private Boolean getAllCheckedStatus(Integer userId){
-        if(userId == null){
+    private Boolean getAllCheckedStatus(Integer userId) {
+        if (userId == null) {
             return false;
         }
         return cartMapper.selectCartProductCheckedStatusByUserId(userId) == 0;
