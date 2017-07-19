@@ -86,6 +86,12 @@ public class CategoryManageController {
         return iCategoryService.getChildrenParallelCategory(categoryId);
     }
 
+    /**
+     * 遍历查询某个分类ID下面的具体信息
+     * @param session
+     * @param categoryId
+     * @return
+     */
     @RequestMapping("get_deep_category.do")
     @ResponseBody
     public ServerResponse getCategoryAndDeepChildrenCategory(HttpSession session,@RequestParam(value = "categoryId" ,defaultValue = "0") Integer categoryId){

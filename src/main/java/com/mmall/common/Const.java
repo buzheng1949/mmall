@@ -16,6 +16,12 @@ public class Const {
 
     public static final String USERNAME = "username";
 
+    public interface Cart{
+        int CHECKED= 1;
+        int UN_CHECKED = 0;
+        String LIMIT_NUM_FAIL = "LIMIT_NUM_FAIL";
+        String LIMIT_NUM_SUCCESS = "LIMIT_NUM_SUCCESS";
+    }
     /**
      * 商品排序
      */
