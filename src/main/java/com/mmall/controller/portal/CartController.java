@@ -38,4 +38,40 @@ public class CartController {
         }
         return iCartService.add(user.getId(), productId, count);
     }
+
+    /**
+     * 更新购物车
+     *
+     * @param session
+     * @param productId
+     * @param count
+     * @return
+     */
+    @RequestMapping(value = "update.do")
+    @ResponseBody
+    public ServerResponse update(HttpSession session, Integer productId, Integer count) {
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if (user == null) {
+            return ServerResponse.createByErrorMessage("用户未登陆");
+        }
+        return iCartService.update(user.getId(), productId, count);
+    }
+
+    /**
+     * 删除购物车的商品 跟前端的约定是根据逗号进行分割
+     *
+     * @param session
+     * @param productId
+     * @return
+     */
+    @RequestMapping(value = "delete_product.do")
+    @ResponseBody
+    public ServerResponse deleteProduct(HttpSession session, String productId) {
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if (user == null) {
+            return ServerResponse.createByErrorMessage("用户未登陆");
+        }
+        return iCartService.deleteProduct(user.getId(), productId);
+
+    }
 }

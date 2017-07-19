@@ -16,7 +16,7 @@
     id, user_id, product_id, quantity, checked, create_time, update_time
   </sql>
   <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
-    select 
+    select
     <include refid="Base_Column_List" />
     from mmall_cart
     where id = #{id,jdbcType=INTEGER}
@@ -137,5 +137,17 @@
     where checked = 0 AND
     user_id = #{userId}
   </select>
+
+  <delete id="deleteByUserIdProductIds" parameterType="map" >
+    DELETE
+    from mmall_cart
+    where user_id = #{userId}
+    <if test="productIdList !=null">
+        and product_id in
+        <foreach collection="productIdList" item="item" index="index" open="(" close=")" separator=",">
+           #{item}
+        </foreach>
+    </if>
+  </delete>
 
 </mapper>
